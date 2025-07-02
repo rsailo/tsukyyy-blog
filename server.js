@@ -5,27 +5,36 @@ const path = require('path');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// 🔧 Upload directory — works for both local and Render
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+
+// 🔥 Create uploads folder if it doesn't exist
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(express.static(__dirname)); // Serves index.html, etc.
+app.use('/uploads', express.static(uploadDir)); // Serve uploaded images
+app.use(express.static(__dirname)); // Serve HTML/CSS/JS
 
-// Serve home page
+// Serve homepage
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Multer config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
-
+// Story data file
 const storiesPath = 'stories.json';
 
 // Helpers
@@ -56,7 +65,7 @@ app.post('/upload', upload.single('storyImage'), (req, res) => {
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
 
   const story = {
-    id: Date.now(), // number
+    id: Date.now(),
     title,
     author,
     avatar,
@@ -78,14 +87,14 @@ app.get('/stories', (req, res) => {
   res.json(loadStories());
 });
 
-// Get story by ID (string-safe)
+// Get single story by ID
 app.get('/stories/:id', (req, res) => {
   const stories = loadStories();
   const story = stories.find(s => String(s.id) === req.params.id);
   story ? res.json(story) : res.status(404).send('Story not found');
 });
 
-// Update story by ID (string-safe)
+// Update story by ID
 app.put('/stories/:id', (req, res) => {
   const stories = loadStories();
   const index = stories.findIndex(s => String(s.id) === req.params.id);
@@ -94,7 +103,7 @@ app.put('/stories/:id', (req, res) => {
     stories[index] = {
       ...stories[index],
       ...Object.fromEntries(Object.entries(req.body).filter(([k, v]) => v !== '')),
-      id: stories[index].id // preserve original ID
+      id: stories[index].id
     };
     saveStories(stories);
     res.sendStatus(200);
@@ -103,7 +112,7 @@ app.put('/stories/:id', (req, res) => {
   }
 });
 
-// Delete story by ID (string-safe) ✅ FIXED
+// Delete story by ID
 app.delete('/stories/:id', (req, res) => {
   const stories = loadStories();
   const filtered = stories.filter(s => String(s.id) !== req.params.id);
@@ -116,7 +125,7 @@ app.delete('/stories/:id', (req, res) => {
   }
 });
 
-// Start server
+// Start the server
 app.listen(PORT, () => {
   console.log(`🌸 Server running at http://localhost:${PORT}`);
 });
