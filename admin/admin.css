@@ -1,0 +1,239 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Comic Sans MS", cursive;
+  background: #fff7fb url("../assets/cloud.png") repeat;
+  background-size: contain;
+  color: #5d3754;
+}
+
+/* Navbar */
+.navbar {
+  background: #ffb6d9;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ff90c2;
+}
+
+.navbar .logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  font-size: 1.3em;
+}
+
+.navbar .logo img {
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+
+.navbar nav a {
+  text-decoration: none;
+  color: white;
+  font-size: 1em;
+  margin-left: 20px;
+}
+
+/* Upload Form */
+.admin-upload {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  margin: 40px auto;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(255, 112, 166, 0.2);
+  max-width: 500px;
+  width: 90%;
+}
+
+.admin-upload h1 {
+  text-align: center;
+  color: #ff70a6;
+}
+
+form input,
+form textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ffd1ea;
+  border-radius: 12px;
+  font-size: 1em;
+  font-family: inherit;
+}
+
+form button {
+  background-color: #ff70a6;
+  color: white;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  font-size: 1em;
+  border-radius: 12px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+form button:hover {
+  background-color: #ff4d8b;
+}
+
+#statusMsg {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+  color: green;
+}
+
+/* Story Card - Matches index.html layout */
+.story-list {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.story-card {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  background: #fff6fb;
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 700px;
+  border-radius: 20px;
+  border: 2px solid #f3c2e2;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  width: 95%;
+  align-items: center;
+}
+
+.story-card img {
+  width: 100px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.story-info {
+  flex: 1;
+}
+
+.story-info h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #a14d86;
+}
+
+.story-info p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+  color: #5d3754;
+}
+
+.read-btn {
+  margin-top: 0.5rem;
+  background: #f78bc0;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Comic Sans MS', cursive;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.read-btn:hover {
+  background-color: #ff6aa3;
+}
+
+/* Footer */
+footer {
+  background: #ffb6d9;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  margin-top: 40px;
+  font-size: 0.9em;
+  border-top: 2px solid #ff90c2;
+}
+
+/* Overlay */
+.story-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.95) url('../assets/cloud.png') repeat;
+  background-size: contain;
+  z-index: 999;
+  padding: 3rem 1rem;
+  overflow-y: auto;
+}
+
+.story-overlay-content {
+  background: rgba(255, 255, 255, 0.92);
+  max-width: 700px;
+  margin: auto;
+  border-radius: 25px;
+  padding: 2rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  position: relative;
+}
+
+.story-overlay-content img {
+  max-width: 100%;
+  max-height: 300px;
+  display: block;
+  margin: 0 auto 1rem;
+  border-radius: 15px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #f78bc0;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.4rem 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .story-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .story-card img {
+    width: 100%;
+    height: auto;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar nav {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .read-btn {
+    align-self: flex-start;
+  }
+}
