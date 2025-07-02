@@ -11,9 +11,9 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET
 });
 
 const storage = new CloudinaryStorage({
@@ -28,7 +28,7 @@ const upload = multer({ storage });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
@@ -50,7 +50,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
-// Serve homepage
+// Homepage
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -70,7 +70,9 @@ app.post('/login', (req, res) => {
 app.post('/upload', upload.single('storyImage'), async (req, res) => {
   const { title, author, avatar, content } = req.body;
   const imageUrl = req.file ? req.file.path : '';
-  const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const date = new Date().toLocaleDateString('en-GB', {
+    day: '2-digit', month: 'long', year: 'numeric'
+  });
 
   const story = new Story({ title, author, avatar, content, image: imageUrl, date });
   await story.save();
@@ -83,23 +85,40 @@ app.get('/stories', async (req, res) => {
   res.json(stories);
 });
 
-// Get one story
+// Get single story
 app.get('/stories/:id', async (req, res) => {
-  const story = await Story.findById(req.params.id);
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).send('Invalid ID');
+
+  const story = await Story.findById(id);
   story ? res.json(story) : res.status(404).send('Story not found');
 });
 
 // Update story
 app.put('/stories/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).send('Invalid ID');
+
   const update = Object.fromEntries(Object.entries(req.body).filter(([_, v]) => v !== ''));
-  const story = await Story.findByIdAndUpdate(req.params.id, update, { new: true });
-  story ? res.sendStatus(200) : res.status(404).send('Story not found');
+  try {
+    const story = await Story.findByIdAndUpdate(id, update, { new: true });
+    story ? res.sendStatus(200) : res.status(404).send('Story not found');
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
 });
 
 // Delete story
 app.delete('/stories/:id', async (req, res) => {
-  const result = await Story.findByIdAndDelete(req.params.id);
-  result ? res.sendStatus(200) : res.status(404).send('Story not found');
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).send('Invalid ID');
+
+  try {
+    const result = await Story.findByIdAndDelete(id);
+    result ? res.sendStatus(200) : res.status(404).send('Story not found');
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
 });
 
 // Start server

@@ -178,7 +178,7 @@
 
     function handleEdit(button) {
       const story = JSON.parse(decodeURIComponent(button.dataset.story));
-      window.location.href = `edit.html?id=${story.id}`;
+      window.location.href = `edit.html?id=${story._id}`;
     }
 
     function renderStories() {
@@ -214,7 +214,7 @@
                 <button class="read-btn" data-story='${encodeURIComponent(JSON.stringify(story))}' onclick="handleRead(this)">Read Full</button>
                 <div class="admin-buttons">
                   <button class="edit-btn" data-story='${encodeURIComponent(JSON.stringify(story))}' onclick="handleEdit(this)">Edit</button>
-                  <button class="delete-btn" onclick='deleteStory("${story.id}")'>Delete</button>
+                  <button class="delete-btn" onclick='deleteStory("${story._id}")'>Delete</button>
                 </div>
               </div>
             </div>
@@ -264,7 +264,7 @@
       try {
         const res = await fetch(`/stories/${id}`, { method: 'DELETE' });
         if (res.ok) {
-          stories = stories.filter(s => String(s.id) !== id);
+          stories = stories.filter(s => s._id !== id);
           renderStories();
           deleteMsg.textContent = "✅ Story deleted successfully!";
           setTimeout(() => deleteMsg.textContent = "", 3000);
