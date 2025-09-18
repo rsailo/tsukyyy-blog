@@ -7,16 +7,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* STYLES remain the same */
     .purple-highlight {
       color: #a14d86;
       font-weight: bold;
-      white-space: pre-wrap;
+      /* ⭐ FIX: This line was removed to allow text to wrap normally */
     }
     .black-preview {
       color: #444;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 2; /* This still shortens the rest of the text */
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -83,7 +82,7 @@
   <script>
     const overlay = document.getElementById("storyOverlay");
     const overlayContent = document.getElementById("overlayContent");
-    let stories = []; // ⭐ FIX: Declare stories array globally
+    let stories = []; 
 
     function closeOverlay() {
       overlay.style.display = "none";
@@ -100,9 +99,7 @@
       overlay.style.display = "block";
     }
     
-    // ⭐ FIX: New function to handle the button click reliably
     function handleRead(storyId) {
-      // Find the full story object from the global 'stories' array
       const story = stories.find(s => s._id === storyId);
       if (story) {
         openOverlay(story);
@@ -111,7 +108,7 @@
 
     async function loadStories() {
       const res = await fetch('/public/stories'); 
-      stories = await res.json(); // ⭐ FIX: Assign to the global stories array
+      stories = await res.json();
 
       const container = document.getElementById("story-container");
       if (!stories.length) {
