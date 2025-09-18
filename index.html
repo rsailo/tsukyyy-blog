@@ -10,21 +10,15 @@
     .purple-highlight {
       color: #a14d86;
       font-weight: bold;
-      display: inline;
+      /* ⭐ FIX: This line was removed to allow text to wrap normally */
     }
     .black-preview {
       color: #444;
-      display: inline;
-    }
-    
-    /* ⭐ FIX: Changed how the preview is cut off */
-    .preview-container {
-      /* This sets a height for about 4 lines and hides anything that overflows */
-      max-height: 6.4em; /* (4 lines * 1.6 line-height) */
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* This still shortens the rest of the text */
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      line-height: 1.6; /* Ensure consistent line height */
     }
-
     .read-btn {
       background-color: #ff70a6;
       color: white;
@@ -125,21 +119,18 @@
       const recentStories = stories.slice(0, 4);
 
       container.innerHTML = recentStories.map(story => {
-        const allWords = story.content.split(/\s+/);
-        const purpleText = allWords.slice(0, 30).join(' ');
-        
-        // ⭐ FIX: Removed the part that adds "..."
-        const blackText = allWords.slice(30).join(' ');
+        const lines = story.content.split('\n');
+        const purpleLines = lines.slice(0, 2).join('\n');
+        const restOfText = lines.slice(2).join(' ');
+        const preview = restOfText.split(' ').slice(0, 20).join(' ') + '...';
 
         return `
           <div class="story-card">
             <img src="${story.image}" alt="${story.title}" />
             <div class="text">
               <h2>${story.title}</h2>
-              <div class="preview-container">
-                <p class="purple-highlight">${purpleText}</p>
-                <p class="black-preview"> ${blackText}</p>
-              </div>
+              <p class="purple-highlight">${purpleLines}</p>
+              <p class="black-preview">${preview}</p>
               <div class="story-footer">
                 <span class="author">By ${story.author}</span>
                 <span class="date">${story.date}</span>
