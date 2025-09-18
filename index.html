@@ -10,12 +10,11 @@
     .purple-highlight {
       color: #a14d86;
       font-weight: bold;
-      /* ⭐ FIX: This line was removed to allow text to wrap normally */
     }
     .black-preview {
       color: #444;
       display: -webkit-box;
-      -webkit-line-clamp: 2; /* This still shortens the rest of the text */
+      -webkit-line-clamp: 2; 
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -87,7 +86,6 @@
     function closeOverlay() {
       overlay.style.display = "none";
     }
-
     function openOverlay(story) {
       overlayContent.innerHTML = `
         <button class="close-btn" onclick="closeOverlay()">Close</button>
@@ -98,7 +96,6 @@
       `;
       overlay.style.display = "block";
     }
-    
     function handleRead(storyId) {
       const story = stories.find(s => s._id === storyId);
       if (story) {
@@ -109,7 +106,6 @@
     async function loadStories() {
       const res = await fetch('/public/stories'); 
       stories = await res.json();
-
       const container = document.getElementById("story-container");
       if (!stories.length) {
         container.innerHTML = `<p style="text-align:center; color:#999;">No stories yet.</p>`;
@@ -117,15 +113,16 @@
       }
 
       const recentStories = stories.slice(0, 4);
-
-      container.innerHTML = recentStories.map(story => {
+      
+      // ⭐ UPDATED a bit of logic here to add the animation delay
+      container.innerHTML = recentStories.map((story, index) => {
         const lines = story.content.split('\n');
         const purpleLines = lines.slice(0, 2).join('\n');
         const restOfText = lines.slice(2).join(' ');
         const preview = restOfText.split(' ').slice(0, 20).join(' ') + '...';
 
         return `
-          <div class="story-card">
+          <div class="story-card" style="animation-delay: ${index * 100}ms;">
             <img src="${story.image}" alt="${story.title}" />
             <div class="text">
               <h2>${story.title}</h2>
