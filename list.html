@@ -6,14 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* Internal styles remain the same */
       #pagination { margin-top: 1.5rem; text-align: center; }
       #pagination button.page-btn { background: #ff70a6; border: none; color: white; padding: 8px 14px; margin: 0 6px; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: 'Comic Sans MS', cursive; font-size: 1rem; transition: background 0.3s ease; }
       #pagination button.page-btn:hover:not(:disabled) { background: #ff4d8b; }
       #pagination button.page-btn:disabled { background: #a14d86; cursor: default; box-shadow: 0 0 10px #a14d86aa; font-weight: 900; font-size: 1.1rem; }
       #page-info { text-align: center; font-family: 'Comic Sans MS', cursive; font-weight: bold; margin-top: 1rem; font-size: 1.1rem; color: #a14d86; }
-      .preview-line-purple { color: #a14d86; font-weight: bold; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-      .preview-line-black { color: #444; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      
+      /* ⭐ UPDATED STYLES for the new preview */
+      .purple-highlight {
+        color: #a14d86;
+        font-weight: bold;
+        white-space: pre-wrap;
+      }
+      .black-preview {
+        color: #444;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .read-btn { background-color: #ff70a6; color: white; padding: 8px 16px; border: none; border-radius: 20px; font-family: 'Comic Sans MS', cursive; cursor: pointer; transition: background 0.3s ease; }
+      .read-btn:hover { background-color: #ff4d8b; }
     </style>
 </head>
 <body>
@@ -50,7 +63,7 @@
       const pagination = document.getElementById("pagination");
       const overlay = document.getElementById("storyOverlay");
       const overlayContent = document.getElementById("overlayContent");
-      let stories = [];
+      let stories = []; 
       let currentPage = 1;
       const storiesPerPage = 7;
 
@@ -66,6 +79,12 @@
         overlay.style.display = "block";
       }
 
+      // ⭐ New reliable way to handle button clicks
+      function handleRead(storyId) {
+        const story = stories.find(s => s._id === storyId);
+        if (story) openOverlay(story);
+      }
+
       function renderStories() {
         const start = (currentPage - 1) * storiesPerPage;
         const end = start + storiesPerPage;
@@ -77,20 +96,22 @@
           return;
         }
         container.innerHTML = currentStories.map(story => {
+          // ⭐ UPDATED: New preview logic
           const lines = story.content.split('\n');
-          const firstLine = lines[0] || '';
-          const restPreview = lines.slice(1).join(' ').split(' ').slice(0, 25).join(' ') + '...';
+          const purpleLines = lines.slice(0, 2).join('\n');
+          const restOfText = lines.slice(2).join(' ');
+          const preview = restOfText.split(' ').slice(0, 20).join(' ') + '...';
           return `
             <div class="story-card">
               <img src="${story.image}" alt="${story.title}" />
               <div class="text">
                 <h2>${story.title}</h2>
-                <p class="preview-line-purple">${firstLine}</p>
-                <p class="preview-line-black">${restPreview}</p>
+                <p class="purple-highlight">${purpleLines}</p>
+                <p class="black-preview">${preview}</p>
                 <div class="story-footer">
                   <span class="author">By ${story.author}</span>
                   <span class="date">${story.date}</span>
-                  <button class="read-btn" onclick='openOverlay(${JSON.stringify(story)})'>Read Full</button>
+                  <button class="read-btn" onclick="handleRead('${story._id}')">Read Full</button>
                 </div>
               </div>
             </div>
@@ -102,11 +123,7 @@
       function renderPagination() {
         const totalPages = Math.ceil(stories.length / storiesPerPage);
         const pageInfo = document.getElementById("page-info");
-        if (totalPages <= 1) {
-          pagination.innerHTML = '';
-          pageInfo.textContent = '';
-          return;
-        }
+        if (totalPages <= 1) { pagination.innerHTML = ''; pageInfo.textContent = ''; return; }
         pageInfo.textContent = `📖 Page ${currentPage} of ${totalPages}`;
         let buttons = '';
         for (let i = 1; i <= totalPages; i++) {
@@ -122,7 +139,6 @@
       }
 
       async function loadStories() {
-        // ⭐ CORRECTED THIS LINE ⭐
         const res = await fetch('/public/stories');
         stories = await res.json();
         currentPage = 1;
