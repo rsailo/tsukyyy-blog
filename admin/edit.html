@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Change Story Image - Admin</title>
+  <title>Edit Story - Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="../style.css" />
   <style>
@@ -23,15 +23,14 @@
       display: block;
       margin-top: 1rem;
     }
-    /* Style for the file input */
-    .edit-form input[type="file"] {
+    .edit-form input,
+    .edit-form textarea {
       width: 100%;
       padding: 10px;
-      border: 1px dashed #ddd;
+      border: 1px solid #ddd;
       border-radius: 10px;
       margin-top: 5px;
       font-family: inherit;
-      background-color: #fff;
     }
     .edit-form button {
       background-color: #ff70a6;
@@ -59,23 +58,29 @@
 </head>
 <body>
   <div class="edit-form">
-    <h2>🖼️ Change Story Image</h2>
-    <form id="editImageForm" enctype="multipart/form-data">
-      <label>Current Image:</label>
+    <h2>Edit Story</h2>
+    <form id="editStoryForm" enctype="multipart/form-data">
+      <label>Author:</label>
+      <input type="text" id="author" required />
+
+      <label>Date:</label>
+      <input type="text" id="date" required />
+
+      <label>Change Image (optional):</label>
+      <input type="file" id="imageFile" name="storyImage" accept="image/*" />
       <img id="previewImage" src="" alt="Story Image Preview" />
-      
-      <label for="newImageFile" style="margin-top: 1.5rem;">Choose a new image:</label>
-      <input type="file" id="newImageFile" name="storyImage" accept="image/*" required />
-      
-      <button type="submit">Upload New Image</button>
+
+      <label>Content:</label>
+      <textarea id="content" rows="10" required></textarea>
+
+      <button type="submit">Update Story</button>
     </form>
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const storyId = params.get('id');
-    const form = document.getElementById("editImageForm");
-    const imageInput = document.getElementById("newImageFile");
+    const imageFileInput = document.getElementById("imageFile");
     const preview = document.getElementById("previewImage");
 
     if (!storyId) {
@@ -83,53 +88,56 @@
       window.location.href = "list.html";
     }
 
-    // Load the current image
-    async function loadCurrentImage() {
+    async function loadStory() {
       try {
         const res = await fetch(`/stories/${storyId}`);
         if (!res.ok) throw new Error("Story not found");
         const story = await res.json();
-        preview.src = story.image || "/assets/default.png";
+
+        document.getElementById('author').value = story.author || '';
+        document.getElementById('date').value = story.date || '';
+        document.getElementById('content').value = story.content || '';
+        preview.src = story.image || "/assets/default.png"; // Set current image preview
       } catch (err) {
-        alert("Error loading current image.");
+        alert("Error loading story.");
         window.location.href = "list.html";
       }
     }
-    
-    // Show a preview of the new image when selected
-    imageInput.addEventListener("change", () => {
-        const file = imageInput.files[0];
-        if (file) {
-            preview.src = URL.createObjectURL(file);
-        }
-    });
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      // We need to use FormData to send a file
-      const formData = new FormData();
-      formData.append('storyImage', imageInput.files[0]);
-
-      try {
-        const res = await fetch(`/stories/update-image/${storyId}`, {
-          method: "POST", // Use POST for file uploads, not PUT
-          body: formData, // No headers needed, browser sets it
-        });
-
-        if (res.ok) {
-          alert("Image updated successfully!");
-          window.location.href = "list.html";
-        } else {
-          const error = await res.json();
-          alert(`Failed to update image: ${error.message}`);
-        }
-      } catch (err) {
-        alert("An error occurred during upload.");
+    imageFileInput.addEventListener("change", () => {
+      const file = imageFileInput.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
       }
     });
 
-    loadCurrentImage();
+    document.getElementById("editStoryForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append('author', document.getElementById('author').value.trim());
+      formData.append('date', document.getElementById('date').value.trim());
+      formData.append('content', document.getElementById('content').value.trim());
+
+      // Only append the image file if one was selected
+      if (imageFileInput.files.length > 0) {
+        formData.append('storyImage', imageFileInput.files[0]);
+      }
+
+      const res = await fetch(`/stories/${storyId}`, {
+        method: "PUT",
+        body: formData // Send as FormData, not JSON
+      });
+
+      if (res.ok) {
+        alert("Story updated successfully!");
+        window.location.href = "list.html";
+      } else {
+        alert("Failed to update story.");
+      }
+    });
+
+    loadStory();
   </script>
 </body>
 </html>
