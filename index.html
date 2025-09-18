@@ -7,20 +7,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* ⭐ UPDATED STYLES for the new preview */
+    /* STYLES remain the same */
     .purple-highlight {
       color: #a14d86;
       font-weight: bold;
-      white-space: pre-wrap; /* This shows the full two lines */
+      white-space: pre-wrap;
     }
     .black-preview {
       color: #444;
       display: -webkit-box;
-      -webkit-line-clamp: 2; /* This still shortens the rest of the text */
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
     .read-btn {
       background-color: #ff70a6;
       color: white;
@@ -52,9 +51,7 @@
   <main class="blog">
     <h1>Tiny stories, big feelings.</h1>
     <p class="subtitle">Sweet little stories to warm your heart 💖</p>
-
     <section id="story-container"></section>
-
     <div style="text-align: center; margin-top: 1rem;">
       <a href="list.html">
         <button class="read-btn">📚 Show All Stories</button>
@@ -86,6 +83,7 @@
   <script>
     const overlay = document.getElementById("storyOverlay");
     const overlayContent = document.getElementById("overlayContent");
+    let stories = []; // ⭐ FIX: Declare stories array globally
 
     function closeOverlay() {
       overlay.style.display = "none";
@@ -101,11 +99,19 @@
       `;
       overlay.style.display = "block";
     }
+    
+    // ⭐ FIX: New function to handle the button click reliably
+    function handleRead(storyId) {
+      // Find the full story object from the global 'stories' array
+      const story = stories.find(s => s._id === storyId);
+      if (story) {
+        openOverlay(story);
+      }
+    }
 
     async function loadStories() {
-      // NOTE: This should fetch from '/public/stories' to hide archived posts
       const res = await fetch('/public/stories'); 
-      const stories = await res.json();
+      stories = await res.json(); // ⭐ FIX: Assign to the global stories array
 
       const container = document.getElementById("story-container");
       if (!stories.length) {
@@ -116,10 +122,9 @@
       const recentStories = stories.slice(0, 4);
 
       container.innerHTML = recentStories.map(story => {
-        // ⭐ NEW: Updated preview logic for all stories
         const lines = story.content.split('\n');
-        const purpleLines = lines.slice(0, 2).join('\n'); // First two lines
-        const restOfText = lines.slice(2).join(' ');      // The rest of the text
+        const purpleLines = lines.slice(0, 2).join('\n');
+        const restOfText = lines.slice(2).join(' ');
         const preview = restOfText.split(' ').slice(0, 20).join(' ') + '...';
 
         return `
@@ -132,7 +137,7 @@
               <div class="story-footer">
                 <span class="author">By ${story.author}</span>
                 <span class="date">${story.date}</span>
-                <button class="read-btn" onclick='openOverlay(${JSON.stringify(story)})'>Read Full</button>
+                <button class="read-btn" onclick="handleRead('${story._id}')">Read Full</button>
               </div>
             </div>
           </div>
