@@ -10,7 +10,6 @@
       margin-top: 1.5rem;
       text-align: center;
     }
-
     #pagination button.page-btn {
       background: #ff70a6;
       border: none;
@@ -24,11 +23,9 @@
       font-size: 1rem;
       transition: background 0.3s ease;
     }
-
     #pagination button.page-btn:hover:not(:disabled) {
       background: #ff4d8b;
     }
-
     #pagination button.page-btn:disabled {
       background: #a14d86;
       cursor: default;
@@ -36,7 +33,6 @@
       font-weight: 900;
       font-size: 1.1rem;
     }
-
     #page-info {
       text-align: center;
       font-family: 'Comic Sans MS', cursive;
@@ -45,13 +41,11 @@
       font-size: 1.1rem;
       color: #a14d86;
     }
-
     .admin-buttons {
       margin-top: 8px;
       display: flex;
       gap: 10px;
     }
-
     .admin-buttons button {
       padding: 6px 12px;
       border: none;
@@ -60,32 +54,13 @@
       font-weight: bold;
       font-family: 'Comic Sans MS', cursive;
     }
+    .edit-btn { background-color: #ffd36b; }
+    .delete-btn { background-color: #ff6b6b; color: white; }
+    .archive-btn { background-color: #a0c4ff; }
+    .unarchive-btn { background-color: #90ee90; }
 
-    .edit-btn {
-      background-color: #ffd36b;
-    }
-
-    .delete-btn {
-      background-color: #ff6b6b;
-      color: white;
-    }
-
-    .edit-btn:hover {
-      background-color: #ffca4d;
-    }
-
-    .delete-btn:hover {
-      background-color: #e04a4a;
-    }
-
-    .story-card .text p {
-      margin: 4px 0;
-    }
-
-    .story-card h2 {
-      margin-bottom: 6px;
-    }
-
+    .story-card .text p { margin: 4px 0; }
+    .story-card h2 { margin-bottom: 6px; }
     .story-footer {
       display: flex;
       justify-content: space-between;
@@ -93,7 +68,6 @@
       flex-wrap: wrap;
       margin-top: 8px;
     }
-
     .read-btn {
       background-color: #ff70a6;
       color: white;
@@ -104,9 +78,10 @@
       font-weight: bold;
       cursor: pointer;
     }
-
-    .read-btn:hover {
-      background-color: #ff4d8b;
+    .read-btn:hover { background-color: #ff4d8b; }
+    .story-card.archived {
+        opacity: 0.6;
+        background-color: #f0f0f0;
     }
   </style>
 </head>
@@ -123,7 +98,7 @@
 
   <main class="blog">
     <h1>🌸 Manage Stories 🌸</h1>
-    <p id="deleteMsg" style="text-align:center; color: green; font-weight: bold; font-family: 'Comic Sans MS', cursive;"></p>
+    <p id="statusMsg" style="text-align:center; color: green; font-weight: bold; font-family: 'Comic Sans MS', cursive;"></p>
     <section id="all-story-container"></section>
     <div id="page-info"></div>
     <div id="pagination"></div>
@@ -150,16 +125,13 @@
     const pagination = document.getElementById("pagination");
     const overlay = document.getElementById("storyOverlay");
     const overlayContent = document.getElementById("overlayContent");
-    const deleteMsg = document.getElementById("deleteMsg");
+    const statusMsg = document.getElementById("statusMsg");
 
     let stories = [];
     let currentPage = 1;
     const storiesPerPage = 7;
 
-    function closeOverlay() {
-      overlay.style.display = "none";
-    }
-
+    function closeOverlay() { overlay.style.display = "none"; }
     function openOverlay(story) {
       overlayContent.innerHTML = `
         <button class="close-btn" onclick="closeOverlay()">Close</button>
@@ -180,6 +152,30 @@
       const story = JSON.parse(decodeURIComponent(button.dataset.story));
       window.location.href = `edit.html?id=${story._id}`;
     }
+    
+    async function toggleArchiveStatus(storyId, isArchived) {
+      try {
+        const res = await fetch(`/stories/archive/${storyId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isArchived: !isArchived })
+        });
+
+        if (res.ok) {
+          const story = stories.find(s => s._id === storyId);
+          if (story) {
+            story.isArchived = !isArchived;
+          }
+          renderStories(); 
+          statusMsg.textContent = `✅ Story ${!isArchived ? 'archived' : 'unarchived'} successfully!`;
+        } else {
+          statusMsg.textContent = "❌ Failed to update story status.";
+        }
+      } catch (err) {
+        statusMsg.textContent = "⚠️ Error updating story status.";
+      }
+      setTimeout(() => statusMsg.textContent = "", 3000);
+    }
 
     function renderStories() {
       const start = (currentPage - 1) * storiesPerPage;
@@ -198,11 +194,20 @@
         const firstLine = lines[0] || '';
         const previewLines = lines.slice(1).join(' ').split(' ').slice(0, 30).join(' ') + '...';
 
+        const isArchived = story.isArchived || false;
+        const archiveButton = `
+          <button 
+            class="${isArchived ? 'unarchive-btn' : 'archive-btn'}" 
+            onclick='toggleArchiveStatus("${story._id}", ${isArchived})'>
+            ${isArchived ? 'Unarchive' : 'Archive'}
+          </button>
+        `;
+
         return `
-          <div class="story-card">
+          <div class="story-card ${isArchived ? 'archived' : ''}">
             <img src="${story.image || '/assets/default.png'}" alt="${story.title}" />
             <div class="text">
-              <h2>${story.title}</h2>
+              <h2>${story.title} ${isArchived ? '(Archived)' : ''}</h2>
               <p style="font-weight: bold; color: #a14d86; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
                 ${firstLine}
               </p>
@@ -214,6 +219,7 @@
                 <button class="read-btn" data-story='${encodeURIComponent(JSON.stringify(story))}' onclick="handleRead(this)">Read Full</button>
                 <div class="admin-buttons">
                   <button class="edit-btn" data-story='${encodeURIComponent(JSON.stringify(story))}' onclick="handleEdit(this)">Edit</button>
+                  ${archiveButton}
                   <button class="delete-btn" onclick='deleteStory("${story._id}")'>Delete</button>
                 </div>
               </div>
@@ -266,13 +272,13 @@
         if (res.ok) {
           stories = stories.filter(s => s._id !== id);
           renderStories();
-          deleteMsg.textContent = "✅ Story deleted successfully!";
-          setTimeout(() => deleteMsg.textContent = "", 3000);
+          statusMsg.textContent = "✅ Story deleted successfully!";
+          setTimeout(() => statusMsg.textContent = "", 3000);
         } else {
-          deleteMsg.textContent = "❌ Failed to delete story.";
+          statusMsg.textContent = "❌ Failed to delete story.";
         }
       } catch (err) {
-        deleteMsg.textContent = "⚠️ Error deleting story.";
+        statusMsg.textContent = "⚠️ Error deleting story.";
       }
     }
 

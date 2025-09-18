@@ -40,7 +40,8 @@ const storySchema = new mongoose.Schema({
   avatar: String,
   content: String,
   image: String,
-  date: String
+  date: String,
+  isArchived: { type: Boolean, default: false } // ⭐ 1. ADDED THIS LINE
 });
 const Story = mongoose.model('Story', storySchema);
 
@@ -70,7 +71,7 @@ app.post('/login', (req, res) => {
 app.post('/upload', upload.single('storyImage'), async (req, res) => {
   const { title, author, avatar, content } = req.body;
   const imageUrl = req.file ? req.file.path : '';
-  const date = new Date().toLocaleDateDateString('en-GB', {
+  const date = new Date().toLocaleDateString('en-GB', {
     day: '2-digit', month: 'long', year: 'numeric'
   });
 
@@ -94,21 +95,19 @@ app.get('/stories/:id', async (req, res) => {
   story ? res.json(story) : res.status(404).send('Story not found');
 });
 
-// ⭐️ UPDATED ROUTE: Handles both text and optional image file update ⭐️
+// UPDATED ROUTE: Handles both text and optional image file update
 app.put('/stories/:id', upload.single('storyImage'), async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).send('Invalid ID');
   }
 
-  // Get text fields from the request body
   const updatedData = {
     author: req.body.author,
     date: req.body.date,
     content: req.body.content,
   };
 
-  // If a new file was uploaded, add its Cloudinary URL to the update object
   if (req.file) {
     updatedData.image = req.file.path;
   }
@@ -121,6 +120,27 @@ app.put('/stories/:id', upload.single('storyImage'), async (req, res) => {
   }
 });
 
+// ⭐ 2. ADDED THIS NEW ROUTE FOR ARCHIVING ⭐
+// Archive/Unarchive a story
+app.put('/stories/archive/:id', async (req, res) => {
+  const { id } = req.params;
+  const { isArchived } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send('Invalid ID');
+  }
+
+  try {
+    const story = await Story.findByIdAndUpdate(
+      id,
+      { isArchived },
+      { new: true }
+    );
+    story ? res.sendStatus(200) : res.status(404).send('Story not found');
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
+});
 
 // Delete story
 app.delete('/stories/:id', async (req, res) => {
