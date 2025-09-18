@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Edit Story - Admin</title>
+  <title>Change Story Image - Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="../style.css" />
   <style>
@@ -14,28 +14,25 @@
       border-radius: 20px;
       font-family: 'Comic Sans MS', cursive;
     }
-
     .edit-form h2 {
       text-align: center;
       color: #a14d86;
     }
-
     .edit-form label {
       font-weight: bold;
       display: block;
       margin-top: 1rem;
     }
-
-    .edit-form input,
-    .edit-form textarea {
+    /* Style for the file input */
+    .edit-form input[type="file"] {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ddd;
+      border: 1px dashed #ddd;
       border-radius: 10px;
       margin-top: 5px;
       font-family: inherit;
+      background-color: #fff;
     }
-
     .edit-form button {
       background-color: #ff70a6;
       color: white;
@@ -48,104 +45,91 @@
       cursor: pointer;
       width: 100%;
     }
-
     .edit-form button:hover {
       background-color: #ff4d8b;
     }
-
     #previewImage {
       display: block;
       margin: 1rem auto 0;
       max-width: 100%;
+      max-height: 300px;
       border-radius: 10px;
     }
   </style>
 </head>
 <body>
   <div class="edit-form">
-    <h2>Edit Story</h2>
-    <form id="editStoryForm">
-      <label>Author:</label>
-      <input type="text" id="author" required />
-
-      <label>Date:</label>
-      <input type="text" id="date" required />
-
-      <label>Image URL (optional):</label>
-      <input type="text" id="image" placeholder="https://example.com/image.jpg" />
+    <h2>🖼️ Change Story Image</h2>
+    <form id="editImageForm" enctype="multipart/form-data">
+      <label>Current Image:</label>
       <img id="previewImage" src="" alt="Story Image Preview" />
-
-      <label>Content:</label>
-      <textarea id="content" rows="10" required></textarea>
-
-      <button type="submit">Update Story</button>
+      
+      <label for="newImageFile" style="margin-top: 1.5rem;">Choose a new image:</label>
+      <input type="file" id="newImageFile" name="storyImage" accept="image/*" required />
+      
+      <button type="submit">Upload New Image</button>
     </form>
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const storyId = params.get('id');
+    const form = document.getElementById("editImageForm");
+    const imageInput = document.getElementById("newImageFile");
+    const preview = document.getElementById("previewImage");
 
     if (!storyId) {
       alert("Missing story ID");
       window.location.href = "list.html";
     }
 
-    async function loadStory() {
+    // Load the current image
+    async function loadCurrentImage() {
       try {
         const res = await fetch(`/stories/${storyId}`);
         if (!res.ok) throw new Error("Story not found");
         const story = await res.json();
-
-        document.getElementById('author').value = story.author || '';
-        document.getElementById('date').value = story.date || '';
-        document.getElementById('image').value = story.image || '';
-        document.getElementById('content').value = story.content || '';
-
-        updatePreviewImage(); // show current image
+        preview.src = story.image || "/assets/default.png";
       } catch (err) {
-        alert("Error loading story.");
+        alert("Error loading current image.");
         window.location.href = "list.html";
       }
     }
+    
+    // Show a preview of the new image when selected
+    imageInput.addEventListener("change", () => {
+        const file = imageInput.files[0];
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+        }
+    });
 
-    function updatePreviewImage() {
-      const imgInput = document.getElementById("image").value.trim();
-      const preview = document.getElementById("previewImage");
-      preview.src = imgInput || "/default.png"; // fallback
-    }
-
-    document.getElementById("image").addEventListener("input", updatePreviewImage);
-
-    document.getElementById("editStoryForm").addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      
+      // We need to use FormData to send a file
+      const formData = new FormData();
+      formData.append('storyImage', imageInput.files[0]);
 
-      const updatedStory = {
-        author: document.getElementById('author').value.trim(),
-        date: document.getElementById('date').value.trim(),
-        content: document.getElementById('content').value.trim()
-      };
+      try {
+        const res = await fetch(`/stories/update-image/${storyId}`, {
+          method: "POST", // Use POST for file uploads, not PUT
+          body: formData, // No headers needed, browser sets it
+        });
 
-      const imageVal = document.getElementById('image').value.trim();
-      if (imageVal) {
-        updatedStory.image = imageVal;
-      }
-
-      const res = await fetch(`/stories/${storyId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedStory)
-      });
-
-      if (res.ok) {
-        alert("Story updated successfully!");
-        window.location.href = "list.html";
-      } else {
-        alert("Failed to update story.");
+        if (res.ok) {
+          alert("Image updated successfully!");
+          window.location.href = "list.html";
+        } else {
+          const error = await res.json();
+          alert(`Failed to update image: ${error.message}`);
+        }
+      } catch (err) {
+        alert("An error occurred during upload.");
       }
     });
 
-    loadStory();
+    loadCurrentImage();
   </script>
 </body>
 </html>

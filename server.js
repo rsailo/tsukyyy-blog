@@ -94,7 +94,7 @@ app.get('/stories/:id', async (req, res) => {
   story ? res.json(story) : res.status(404).send('Story not found');
 });
 
-// Update story
+// Update story TEXT
 app.put('/stories/:id', async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).send('Invalid ID');
@@ -105,6 +105,36 @@ app.put('/stories/:id', async (req, res) => {
     story ? res.sendStatus(200) : res.status(404).send('Story not found');
   } catch (err) {
     res.status(500).send('Server error');
+  }
+});
+
+// ⭐️ NEW: Update story IMAGE ONLY ⭐️
+app.post('/stories/update-image/:id', upload.single('storyImage'), async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid ID' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file provided' });
+  }
+
+  try {
+    const imageUrl = req.file.path; // Get the new image URL from Cloudinary
+    
+    const story = await Story.findByIdAndUpdate(
+      id, 
+      { image: imageUrl }, 
+      { new: true }
+    );
+
+    if (story) {
+      res.status(200).json({ success: true, story });
+    } else {
+      res.status(404).json({ message: 'Story not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating image' });
   }
 });
 
