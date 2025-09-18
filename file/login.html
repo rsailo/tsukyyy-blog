@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: #fff7fb url('assets/cloud.png') repeat;
+      background-size: contain;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2rem 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .login-box p.message {
+      color: #a14d86;
+      margin-bottom: 1rem;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .login-box h2 {
+      margin-bottom: 1rem;
+      color: #a14d86;
+      font-size: 1.6rem;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.6rem 0;
+      border-radius: 10px;
+      border: 2px solid #f3c2e2;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .login-box button {
+      background: #f78bc0;
+      color: white;
+      font-weight: bold;
+      font-family: inherit;
+      border: none;
+      padding: 0.8rem 1.2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      transition: background 0.3s ease;
+    }
+
+    .login-box button:hover {
+      background: #ff6aa3;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 1.2rem;
+      text-decoration: none;
+      background-color: #e6b4d8;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      font-weight: bold;
+      font-family: inherit;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      transition: background 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #d68ac1;
+    }
+
+    .footer-note {
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <p class="message">🌸 To post stories, please login first</p>
+    <h2>Admin Login</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <a href="index.html" class="back-btn">← Go Back</a>
+    <div class="footer-note">Admin Panel</div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (res.ok) {
+          // ✅ Redirect to admin page in admin folder
+          window.location.href = 'admin/admin.html';
+        } else {
+          alert('❌ Invalid username or password!');
+        }
+      } catch (err) {
+        alert('⚠️ Server error. Please try again later.');
+      }
+    });
+  </script>
+</body>
+</html>
