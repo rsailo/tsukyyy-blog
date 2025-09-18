@@ -10,10 +10,7 @@
     .preview-line-purple {
       color: #a14d86;
       font-weight: bold;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      /* ⭐ REMOVED line clamp to show the full line */
     }
 
     .preview-line-black {
@@ -22,6 +19,11 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+
+    .full-content-short {
+        white-space: pre-wrap; /* This respects line breaks in the text */
+        color: #444;
     }
 
     .read-btn {
@@ -38,45 +40,71 @@
     .read-btn:hover {
       background-color: #ff4d8b;
     }
+    
+    .sparkle {
+      display: inline-block;
+      margin-left: 5px;
+      animation: pop-in 1s ease-out forwards, sparkle-animation 2s infinite;
+    }
+
+    @keyframes sparkle-animation {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3) rotate(15deg); opacity: 0.8; }
+    }
+
+    .update-notice {
+        text-align: center;
+        color: #ff70a6;
+        font-weight: bold;
+        margin-bottom: 20px;
+        opacity: 0;
+        animation: fade-in-out 4s ease-in-out;
+    }
+
+    @keyframes fade-in-out {
+      0%, 100% { opacity: 0; }
+      20%, 80% { opacity: 1; }
+    }
+    
+    @keyframes pop-in {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
-  <!-- Navbar -->
   <header class="navbar">
     <a href="index.html" class="logo" style="text-decoration: none; color: inherit;">
       <img src="assets/avatar.png" alt="Logo" />
       <span>Tsukyyy</span>
     </a>
     <nav>
-      <a href="/login.html">Post Story</a>
-      <a href="list.html">List</a>
+      <a href="/admin/login.html">Post Story</a>
+      <a href="/admin/list.html">List</a>
       <a href="#about">About</a>
     </nav>
   </header>
 
-  <!-- Blog Header -->
   <main class="blog">
     <h1>Tiny stories, big feelings.</h1>
     <p class="subtitle">Sweet little stories to warm your heart 💖</p>
+    
+    <div id="update-notice-container"></div>
 
-    <!-- Dynamic Story Container -->
     <section id="story-container"></section>
 
-    <!-- Show All Button -->
     <div style="text-align: center; margin-top: 1rem;">
-      <a href="list.html">
+      <a href="/admin/list.html">
         <button class="read-btn">📚 Show All Stories</button>
       </a>
     </div>
   </main>
 
-  <!-- About -->
   <section id="about" class="about-section">
     <h2>About Me</h2>
     <p>Just a quiet corner of the internet to share little moments, feelings, and memories. Hope you feel at home here. 🌸</p>
   </section>
 
-  <!-- Footer -->
   <footer class="footer">
     <p>🌸 Made with love | 2025</p>
     <p>🌸 Connect with us on Instagram</p>
@@ -87,14 +115,12 @@
     </div>
   </footer>
 
-  <!-- Full Story Overlay -->
   <div class="story-overlay" id="storyOverlay">
     <div class="story-overlay-content" id="overlayContent">
       <button class="close-btn" onclick="closeOverlay()">Close</button>
     </div>
   </div>
 
-  <!-- Script -->
   <script>
     const overlay = document.getElementById("storyOverlay");
     const overlayContent = document.getElementById("overlayContent");
@@ -115,7 +141,7 @@
     }
 
     async function loadStories() {
-      const res = await fetch('/stories');
+      const res = await fetch('/public/stories');
       const stories = await res.json();
 
       const container = document.getElementById("story-container");
@@ -125,28 +151,59 @@
       }
 
       const recentStories = stories.slice(0, 4);
+      let hasNewStory = false;
 
       container.innerHTML = recentStories.map(story => {
-        const lines = story.content.split('\n');
-        const firstLine = lines[0] || '';
-        const restPreview = lines.slice(1).join(' ').split(' ').slice(0, 25).join(' ') + '...';
+        // ⭐ NEW: Logic to handle short vs long stories
+        const wordCount = story.content.split(/\s+/).length;
+        const wordLimit = 40;
+        let contentHtml;
+        let readButtonHtml;
+
+        if (wordCount <= wordLimit) {
+          // It's a short story: show full content, no "Read Full" button
+          contentHtml = `<p class="full-content-short">${story.content}</p>`;
+          readButtonHtml = ''; // No button
+        } else {
+          // It's a long story: show truncated preview and the "Read Full" button
+          const lines = story.content.split('\n');
+          const firstLine = lines[0] || '';
+          const restPreview = lines.slice(1).join(' ').split(' ').slice(0, 25).join(' ') + '...';
+          contentHtml = `
+            <p class="preview-line-purple">${firstLine}</p>
+            <p class="preview-line-black">${restPreview}</p>
+          `;
+          readButtonHtml = `<button class="read-btn" onclick='openOverlay(${JSON.stringify(story)})'>Read Full</button>`;
+        }
+
+        const storyDate = new Date(story.date.split(' ').reverse().join('-'));
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        
+        const isNew = storyDate > twoDaysAgo;
+        if (isNew) hasNewStory = true;
+        const newIndicator = isNew ? '<span class="sparkle">✨</span>' : '';
 
         return `
           <div class="story-card">
             <img src="${story.image}" alt="${story.title}" />
             <div class="text">
-              <h2>${story.title}</h2>
-              <p class="preview-line-purple">${firstLine}</p>
-              <p class="preview-line-black">${restPreview}</p>
+              <h2>${story.title}${newIndicator}</h2>
+              ${contentHtml}
               <div class="story-footer">
                 <span class="author">By ${story.author}</span>
                 <span class="date">${story.date}</span>
-                <button class="read-btn" onclick='openOverlay(${JSON.stringify(story)})'>Read Full</button>
+                ${readButtonHtml}
               </div>
             </div>
           </div>
         `;
       }).join('');
+
+      if (hasNewStory) {
+        document.getElementById('update-notice-container').innerHTML = 
+          `<p class="update-notice">🌸 Site Updated! 🌸</p>`;
+      }
     }
 
     loadStories();

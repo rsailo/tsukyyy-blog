@@ -41,7 +41,7 @@ const storySchema = new mongoose.Schema({
   content: String,
   image: String,
   date: String,
-  isArchived: { type: Boolean, default: false } // ⭐ 1. ADDED THIS LINE
+  isArchived: { type: Boolean, default: false }
 });
 const Story = mongoose.model('Story', storySchema);
 
@@ -80,9 +80,16 @@ app.post('/upload', upload.single('storyImage'), async (req, res) => {
   res.json({ success: true, story });
 });
 
-// Get all stories
+// Get all stories (for admin)
 app.get('/stories', async (req, res) => {
   const stories = await Story.find().sort({ _id: -1 });
+  res.json(stories);
+});
+
+// ⭐ NEW: Get ONLY PUBLIC (non-archived) stories ⭐
+app.get('/public/stories', async (req, res) => {
+  // The filter { isArchived: false } ensures only non-archived stories are found
+  const stories = await Story.find({ isArchived: false }).sort({ _id: -1 });
   res.json(stories);
 });
 
@@ -120,7 +127,6 @@ app.put('/stories/:id', upload.single('storyImage'), async (req, res) => {
   }
 });
 
-// ⭐ 2. ADDED THIS NEW ROUTE FOR ARCHIVING ⭐
 // Archive/Unarchive a story
 app.put('/stories/archive/:id', async (req, res) => {
   const { id } = req.params;
