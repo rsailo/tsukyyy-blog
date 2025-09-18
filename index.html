@@ -7,11 +7,58 @@
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* Internal styles remain the same */
-    .preview-line-purple { color: #a14d86; font-weight: bold; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-    .preview-line-black { color: #444; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .read-btn { background-color: #ff70a6; color: white; padding: 8px 16px; border: none; border-radius: 20px; font-family: 'Comic Sans MS', cursive; cursor: pointer; transition: background 0.3s ease; }
-    .read-btn:hover { background-color: #ff4d8b; }
+    /* ⭐ UPDATED STYLES for the preview */
+    .purple-highlight {
+      color: #a14d86;
+      font-weight: bold;
+      white-space: pre-wrap; /* This respects line breaks */
+    }
+    .black-preview {
+      color: #444;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .read-btn {
+      background-color: #ff70a6;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      font-family: 'Comic Sans MS', cursive;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .read-btn:hover {
+      background-color: #ff4d8b;
+    }
+    .sparkle {
+      display: inline-block;
+      margin-left: 5px;
+      animation: pop-in 1s ease-out forwards, sparkle-animation 2s infinite;
+    }
+    @keyframes sparkle-animation {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3) rotate(15deg); opacity: 0.8; }
+    }
+    .update-notice {
+        text-align: center;
+        color: #ff70a6;
+        font-weight: bold;
+        margin-bottom: 20px;
+        opacity: 0;
+        animation: fade-in-out 4s ease-in-out;
+    }
+    @keyframes fade-in-out {
+      0%, 100% { opacity: 0; }
+      20%, 80% { opacity: 1; }
+    }
+    @keyframes pop-in {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -21,17 +68,18 @@
       <span>Tsukyyy</span>
     </a>
     <nav>
-      <a href="/login.html">Post Story</a>
-      <a href="list.html">List</a>
+      <a href="/admin/login.html">Post Story</a>
+      <a href="/admin/list.html">List</a>
       <a href="#about">About</a>
     </nav>
   </header>
   <main class="blog">
     <h1>Tiny stories, big feelings.</h1>
     <p class="subtitle">Sweet little stories to warm your heart 💖</p>
+    <div id="update-notice-container"></div>
     <section id="story-container"></section>
     <div style="text-align: center; margin-top: 1rem;">
-      <a href="list.html">
+      <a href="/admin/list.html">
         <button class="read-btn">📚 Show All Stories</button>
       </a>
     </div>
@@ -59,7 +107,9 @@
     const overlay = document.getElementById("storyOverlay");
     const overlayContent = document.getElementById("overlayContent");
 
-    function closeOverlay() { overlay.style.display = "none"; }
+    function closeOverlay() {
+      overlay.style.display = "none";
+    }
     function openOverlay(story) {
       overlayContent.innerHTML = `
         <button class="close-btn" onclick="closeOverlay()">Close</button>
@@ -72,10 +122,8 @@
     }
 
     async function loadStories() {
-      // ⭐ CORRECTED THIS LINE ⭐
       const res = await fetch('/public/stories');
       const stories = await res.json();
-
       const container = document.getElementById("story-container");
       if (!stories.length) {
         container.innerHTML = `<p style="text-align:center; color:#999;">No stories yet.</p>`;
@@ -83,28 +131,51 @@
       }
 
       const recentStories = stories.slice(0, 4);
+      let hasNewStory = false;
+
       container.innerHTML = recentStories.map(story => {
+        // ⭐ REMOVED the special logic for short stories ⭐
         const lines = story.content.split('\n');
-        const firstLine = lines[0] || '';
-        const restPreview = lines.slice(1).join(' ').split(' ').slice(0, 25).join(' ') + '...';
+        const purpleLines = lines.slice(0, 2).join('\n');
+        const restOfText = lines.slice(2).join(' ');
+        const preview = restOfText.split(' ').slice(0, 20).join(' ') + '...';
+
+        const contentHtml = `
+            <p class="purple-highlight">${purpleLines}</p>
+            <p class="black-preview">${preview}</p>
+          `;
+        const readButtonHtml = `<button class="read-btn" onclick='openOverlay(${JSON.stringify(story)})'>Read Full</button>`;
+
+        const storyDate = new Date(story.date.split(' ').reverse().join('-'));
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        
+        const isNew = storyDate > twoDaysAgo;
+        if (isNew) hasNewStory = true;
+        const newIndicator = isNew ? '<span class="sparkle">✨</span>' : '';
 
         return `
           <div class="story-card">
             <img src="${story.image}" alt="${story.title}" />
             <div class="text">
-              <h2>${story.title}</h2>
-              <p class="preview-line-purple">${firstLine}</p>
-              <p class="preview-line-black">${restPreview}</p>
+              <h2>${story.title}${newIndicator}</h2>
+              ${contentHtml}
               <div class="story-footer">
                 <span class="author">By ${story.author}</span>
                 <span class="date">${story.date}</span>
-                <button class="read-btn" onclick='openOverlay(${JSON.stringify(story)})'>Read Full</button>
+                ${readButtonHtml}
               </div>
             </div>
           </div>
         `;
       }).join('');
+
+      if (hasNewStory) {
+        document.getElementById('update-notice-container').innerHTML = 
+          `<p class="update-notice">🌸 Site Updated! 🌸</p>`;
+      }
     }
+
     loadStories();
   </script>
 </body>
